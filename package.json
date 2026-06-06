@@ -1,0 +1,25 @@
+{
+  "name": "futahason-e2e",
+  "version": "1.0.0",
+  "description": "Playwright end-to-end test suite for futahason.com (FUTA Hà Sơn) — Login, Trip search, Payment information",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:login": "playwright test tests/login.spec.ts",
+    "test:search": "playwright test tests/search-trip.spec.ts",
+    "test:payment": "playwright test tests/payment-info.spec.ts",
+    "test:debug": "playwright test --debug",
+    "report": "playwright show-report",
+    "codegen": "playwright codegen https://futahason.com",
+    "auth:setup": "playwright test tests/auth.setup.ts --project=setup --headed",
+    "testcases:xlsx": "node scripts/generate-testcases-xlsx.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@types/node": "^22.10.0",
+    "dotenv": "^16.4.7"
+  }
+}
