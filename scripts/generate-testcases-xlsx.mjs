@@ -4,6 +4,11 @@
 //
 //   Usage:  npm run testcases:xlsx     (or)  node scripts/generate-testcases-xlsx.mjs
 //
+// (VI) Sinh file test-cases/TestCases_Futahason.xlsx từ mảng nguồn-sự-thật-duy-nhất
+// (VI) bên dưới — không dùng thư viện ngoài, chỉ dùng zlib của Node. Mã test case ở
+// (VI) đây trùng với mã trong tests/*.spec.ts để workbook và phần tự động luôn khớp.
+// (VI)   Cách chạy:  npm run testcases:xlsx   (hoặc)  node scripts/generate-testcases-xlsx.mjs
+//
 import { deflateRawSync } from 'node:zlib';
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -15,6 +20,11 @@ const OUT = resolve(__dirname, '../test-cases/TestCases_Futahason.xlsx');
 // ─── Single source of truth: the test cases ──────────────────────────────────
 // columns: id, feature, title, pre, steps[], data, expected, priority, type,
 //          automated, ref, status
+// (VI) ─── Nguồn sự thật duy nhất: danh sách test case ───
+// (VI) các cột: id (mã), feature (tính năng), title (tiêu đề), pre (điều kiện),
+// (VI) steps[] (các bước), data (dữ liệu), expected (kết quả mong đợi),
+// (VI) priority (độ ưu tiên), type (loại), automated (tự động hoá), ref (spec/test),
+// (VI) status (trạng thái).
 const TESTS = [
   // ── Đăng nhập (Login) ──────────────────────────────────────────────────────
   {
@@ -310,10 +320,13 @@ const HEADERS = [
 const WIDTHS = [13, 18, 28, 24, 40, 22, 42, 14, 14, 20, 26, 20];
 
 // ─── Minimal XLSX (OOXML + zip) writer — no external deps ─────────────────────
+// (VI) ─── Bộ ghi XLSX tối giản (OOXML + zip) — không phụ thuộc thư viện ngoài ───
+// (VI) esc: thoát các ký tự đặc biệt của XML (& < > " và bỏ \r).
 const esc = (s) =>
   String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/\r/g, '');
 
+// (VI) Đổi chỉ số cột (0,1,2...) sang chữ cái cột của Excel (A,B,...,Z,AA,...).
 const colLetter = (i) => {
   let s = '', n = i;
   do { s = String.fromCharCode(65 + (n % 26)) + s; n = Math.floor(n / 26) - 1; } while (n >= 0);
@@ -321,10 +334,13 @@ const colLetter = (i) => {
 };
 
 /** Build a <c> cell with an inline string and a style index. */
+// (VI) Tạo một ô <c> dạng chuỗi nội tuyến (inlineStr) kèm chỉ số style.
 const cell = (col, row, text, style) =>
   `<c r="${colLetter(col)}${row}" s="${style}" t="inlineStr"><is><t xml:space="preserve">${esc(text)}</t></is></c>`;
 
 /** rows: array of { cells: [{text, style}] } → worksheet xml. */
+// (VI) Dựng XML cho một worksheet từ mảng dòng. Hỗ trợ: độ rộng cột (widths),
+// (VI) đóng băng N dòng đầu (freezeRows), bộ lọc tự động (autoFilterRef), gộp ô (merges).
 function sheetXml(rows, widths, freezeRows, autoFilterRef, merges = []) {
   const cols = widths
     ? `<cols>${widths.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join('')}</cols>`
@@ -350,6 +366,7 @@ ${cols}<sheetData>${data}</sheetData>${filter}${mc}</worksheet>`;
 }
 
 // styles: 0 default · 1 title · 2 header · 3 body(wrap,top) · 4 body(center,top)
+// (VI) các style: 0 mặc định · 1 tiêu đề · 2 dòng header · 3 thân (xuống dòng, canh trên) · 4 thân (canh giữa, canh trên)
 const STYLES = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
 <fonts count="3">
@@ -378,7 +395,8 @@ const STYLES = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 </styleSheet>`;
 
 // ── Sheet 1: Test Cases ──────────────────────────────────────────────────────
-const centerCols = new Set([0, 7, 9]); // Mã TC, Độ ưu tiên, Tự động hóa
+// (VI) ── Sheet 1: Danh sách Test Case ──
+const centerCols = new Set([0, 7, 9]); // Mã TC, Độ ưu tiên, Tự động hóa — (VI) các cột canh giữa
 const tcRows = [];
 tcRows.push({ cells: HEADERS.map((_, i) => ({ text: i === 0 ? 'BỘ TEST CASE — futahason.com (FUTA Hà Sơn)' : '', style: 1 })) });
 tcRows.push({ cells: HEADERS.map((h) => ({ text: h, style: 2 })) });
@@ -392,6 +410,7 @@ for (const t of TESTS) {
 const sheet1 = sheetXml(tcRows, WIDTHS, 2, `A2:${colLetter(HEADERS.length - 1)}2`, [`A1:${colLetter(HEADERS.length - 1)}1`]);
 
 // ── Sheet 2: Summary ─────────────────────────────────────────────────────────
+// (VI) ── Sheet 2: Tổng quan (thống kê độ bao phủ theo tính năng & độ ưu tiên) ──
 const features = [...new Set(TESTS.map((t) => t.feature))];
 const countBy = (pred) => TESTS.filter(pred).length;
 const sumRows = [];
@@ -422,6 +441,7 @@ for (const p of ['P1 - Cao', 'P2 - Trung bình', 'P3 - Thấp']) {
 const sheet2 = sheetXml(sumRows, [26, 12, 12, 16], 2, null, [`A1:D1`]);
 
 // ── Sheet 3: Traceability ────────────────────────────────────────────────────
+// (VI) ── Sheet 3: Ma trận truy vết (đối chiếu test case ↔ test tự động) ──
 const trRows = [];
 trRows.push({ cells: ['MA TRẬN TRUY VẾT (Test case ↔ Automation)', '', '', ''].map((t) => ({ text: t, style: 1 })) });
 trRows.push({ cells: ['Mã TC', 'Tính năng', 'Spec / Test', 'Tự động hóa'].map((h) => ({ text: h, style: 2 })) });
@@ -436,6 +456,8 @@ for (const t of TESTS) {
 const sheet3 = sheetXml(trRows, [13, 22, 34, 22], 2, `A2:D2`, [`A1:D1`]);
 
 // ── Package parts ────────────────────────────────────────────────────────────
+// (VI) ── Các thành phần trong gói .xlsx (file .xlsx thực chất là một file zip
+// (VI) chứa các phần XML chuẩn OOXML: content types, quan hệ, workbook, sheet, style) ──
 const parts = {
   '[Content_Types].xml': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
@@ -473,6 +495,8 @@ const parts = {
 };
 
 // ─── CRC32 + ZIP container ────────────────────────────────────────────────────
+// (VI) ─── CRC32 + đóng gói ZIP (tự cài đặt vì không dùng thư viện ngoài) ───
+// (VI) Bảng tra CRC32 dựng sẵn để tính checksum cho từng file trong zip.
 const CRC_TABLE = (() => {
   const t = new Uint32Array(256);
   for (let n = 0; n < 256; n++) {
@@ -488,6 +512,9 @@ function crc32(buf) {
   return (c ^ 0xffffffff) >>> 0;
 }
 
+// (VI) Tự đóng gói nhiều file thành một buffer định dạng ZIP:
+// (VI) mỗi file gồm "local header" + tên + dữ liệu nén; sau đó là "central directory"
+// (VI) và cuối cùng là bản ghi EOCD (End Of Central Directory).
 function zip(files) {
   const chunks = [];
   const central = [];
@@ -495,9 +522,10 @@ function zip(files) {
   for (const [name, content] of Object.entries(files)) {
     const nameBuf = Buffer.from(name, 'utf8');
     const data = Buffer.from(content, 'utf8');
-    const comp = deflateRawSync(data);
+    const comp = deflateRawSync(data); // (VI) nén raw deflate (method 8)
     const crc = crc32(data);
 
+    // (VI) Local file header (30 byte) — mô tả file ngay trước phần dữ liệu nén.
     const local = Buffer.alloc(30);
     local.writeUInt32LE(0x04034b50, 0);
     local.writeUInt16LE(20, 4);          // version needed
@@ -512,6 +540,7 @@ function zip(files) {
     local.writeUInt16LE(0, 28);          // extra length
     chunks.push(local, nameBuf, comp);
 
+    // (VI) Central directory entry (46 byte) — mục lục mô tả lại file ở cuối zip.
     const cd = Buffer.alloc(46);
     cd.writeUInt32LE(0x02014b50, 0);
     cd.writeUInt16LE(20, 4);             // version made by
@@ -536,6 +565,7 @@ function zip(files) {
   }
   const cdBuf = Buffer.concat(central);
   const cdOffset = offset;
+  // (VI) EOCD (22 byte) — bản ghi kết thúc, cho biết số file và vị trí central directory.
   const eocd = Buffer.alloc(22);
   eocd.writeUInt32LE(0x06054b50, 0);
   eocd.writeUInt16LE(0, 4);
@@ -548,6 +578,7 @@ function zip(files) {
   return Buffer.concat([...chunks, cdBuf, eocd]);
 }
 
+// (VI) Tạo thư mục đích nếu chưa có, rồi ghi file .xlsx ra đĩa.
 mkdirSync(dirname(OUT), { recursive: true });
 writeFileSync(OUT, zip(parts));
 console.log(`✓ Wrote ${TESTS.length} test cases across 3 sheets → ${OUT}`);
