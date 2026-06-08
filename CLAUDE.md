@@ -55,9 +55,17 @@ Header "Đăng nhập" → modal opens
   └─ "Đăng nhập" → requests an OTP by SMS/Zalo → code-entry step
 ```
 
-- Submitting an **empty or invalid** phone does **not** advance and does **not** show an
-  inline error — the modal simply stays on the phone step. Tests assert *"did not advance"*,
-  not a message (because there is no reliable message to assert).
+- Submitting an **empty** phone does **not** advance and shows no message — the modal
+  simply stays on the phone step (TC-LOGIN-03 asserts *"did not advance"*).
+- The phone must be **the right length and start with `0`** (Vietnamese mobile format).
+  Two distinct rejections were verified live:
+  - **Right length but no leading `0`** (e.g. `9012345678`) → an **inline hint** appears
+    in the modal: *"Nhập số điện thoại bắt đầu bằng 0/A phone number start with 0"*
+    (TC-LOGIN-10 asserts this; `MESSAGES.login.mustStartWithZero`).
+  - **Starts with `0` but malformed/too short** (e.g. `0901`) → an **alert popup**
+    *"Số điện thoại không hợp lệ"* (TC-LOGIN-05 asserts this via `expectAlert`;
+    `MESSAGES.login.invalidPhone`).
+  In all cases the modal stays on the phone step and no OTP is sent.
 - Completing login (entering the OTP) needs the real code → out of scope for the default
   run; handled by `tests/auth.setup.ts`.
 
@@ -188,7 +196,7 @@ Without `auth/user.json`, the authenticated tests **skip** automatically, so `np
 is always green out of the box.
 
 ### Expected default result
-`npm test` → **17 passed, 3 skipped**. The 3 skips are by design:
+`npm test` → **18 passed, 3 skipped**. The 3 skips are by design:
 - `TC-LOGIN-06` — needs `TEST_PHONE`.
 - `TC-PAY-08`, `TC-PAY-09` — need a saved OTP session.
 

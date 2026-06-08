@@ -83,6 +83,28 @@ export class LoginModal extends BasePage {
     await expect(this.otpInputs.first()).toBeVisible({ timeout: 15_000 });
   }
 
+  /**
+   * Assert no OTP was sent (the code-entry step never rendered). Use this when a
+   * validation alert takes over and hides the login modal, so the
+   * "still on phone step" check no longer applies.
+   */
+  // (VI) Khẳng định OTP chưa được gửi (chưa render bước nhập mã). Dùng khi popup
+  // cảnh báo che/đóng modal đăng nhập, nên không thể kiểm tra "vẫn ở bước SĐT".
+  async expectOtpNotSent(): Promise<void> {
+    await expect(this.otpInputs).toHaveCount(0);
+  }
+
+  /**
+   * Assert an inline validation hint is shown inside the login modal (e.g. the
+   * "must start with 0" message), and that submission was blocked.
+   */
+  // (VI) Khẳng định gợi ý lỗi hiện ngay trong modal (vd: "bắt đầu bằng 0") và
+  // việc gửi đã bị chặn.
+  async expectPhoneHint(text: string): Promise<void> {
+    await expect(this.dialog).toContainText(text);
+    await expect(this.otpInputs).toHaveCount(0); // (VI) Chưa sang bước OTP
+  }
+
   // (VI) Đóng modal bằng nút Close và chờ nó biến mất.
   async close(): Promise<void> {
     await this.closeButton.click();

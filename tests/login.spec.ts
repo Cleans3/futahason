@@ -1,5 +1,5 @@
 import { test, expect } from '../fixtures/fixtures';
-import { COUNTRY_CODE_VALUE, PHONES } from '../fixtures/test-data';
+import { COUNTRY_CODE_VALUE, MESSAGES, PHONES } from '../fixtures/test-data';
 
 /**
  * Feature: Đăng nhập (Login)
@@ -52,12 +52,26 @@ test.describe('Đăng nhập (Login)', () => {
     await login.expectStillOnPhoneStep();
   });
 
-  // (VI) Từ chối số điện thoại quá ngắn.
+  // (VI) Từ chối số điện thoại bắt đầu bằng 0 nhưng quá ngắn — site hiện popup
+  // "Số điện thoại không hợp lệ" và không gửi OTP.
   test('TC-LOGIN-05: rejects a too-short phone number', async ({ home }) => {
     const login = await home.openLogin();
     await login.fillPhone(PHONES.tooShort);
     await login.requestOtp();
-    await login.expectStillOnPhoneStep();
+    // The alert takes over and hides the login modal, so assert the alert + that
+    // no OTP was sent (not "still on phone step").
+    // (VI) Popup cảnh báo che/đóng modal, nên kiểm tra popup + OTP chưa gửi.
+    await login.expectAlert(MESSAGES.login.invalidPhone);
+    await login.expectOtpNotSent();
+  });
+
+  // (VI) Từ chối SĐT đủ độ dài nhưng không bắt đầu bằng 0 — số VN bắt buộc bắt
+  // đầu bằng 0. Modal hiện gợi ý "Nhập số điện thoại bắt đầu bằng 0".
+  test('TC-LOGIN-10: rejects a phone number that does not start with 0', async ({ home }) => {
+    const login = await home.openLogin();
+    await login.fillPhone(PHONES.noLeadingZero);
+    await login.requestOtp();
+    await login.expectPhoneHint(MESSAGES.login.mustStartWithZero);
   });
 
   // (VI) Đóng modal bằng nút Close.

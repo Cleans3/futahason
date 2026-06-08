@@ -64,11 +64,11 @@ const TESTS = [
     ref: 'login.spec.ts › TC-LOGIN-04', status: 'Tự động ✓',
   },
   {
-    id: 'TC-LOGIN-05', feature: 'Đăng nhập', title: 'Từ chối SĐT quá ngắn',
+    id: 'TC-LOGIN-05', feature: 'Đăng nhập', title: 'Từ chối SĐT bắt đầu bằng 0 nhưng quá ngắn',
     pre: 'Popup đăng nhập đang mở',
-    steps: ['Nhập SĐT quá ngắn', 'Nhấn "Đăng nhập"'],
+    steps: ['Nhập SĐT bắt đầu bằng 0 nhưng quá ngắn', 'Nhấn "Đăng nhập"'],
     data: 'SĐT = "0901"',
-    expected: 'Không gửi OTP; popup vẫn ở bước nhập SĐT.',
+    expected: 'Hiện popup "Số điện thoại không hợp lệ"; không gửi OTP; vẫn ở bước nhập SĐT.',
     priority: 'P2 - Trung bình', type: 'Negative', automated: 'Automated',
     ref: 'login.spec.ts › TC-LOGIN-05', status: 'Tự động ✓',
   },
@@ -107,6 +107,15 @@ const TESTS = [
     expected: 'Hiển thị lỗi mã không đúng; không đăng nhập.',
     priority: 'P2 - Trung bình', type: 'Negative', automated: 'Manual (cần OTP thật)',
     ref: '—', status: 'Thủ công',
+  },
+  {
+    id: 'TC-LOGIN-10', feature: 'Đăng nhập', title: 'Từ chối SĐT không bắt đầu bằng 0',
+    pre: 'Popup đăng nhập đang mở',
+    steps: ['Nhập SĐT đủ độ dài nhưng không bắt đầu bằng 0', 'Nhấn "Đăng nhập"'],
+    data: 'SĐT = "9012345678"',
+    expected: 'Không gửi OTP; modal hiện gợi ý "Nhập số điện thoại bắt đầu bằng 0".',
+    priority: 'P2 - Trung bình', type: 'Negative', automated: 'Automated',
+    ref: 'login.spec.ts › TC-LOGIN-10', status: 'Tự động ✓',
   },
 
   // ── Tìm kiếm chuyến xe (Search) ────────────────────────────────────────────

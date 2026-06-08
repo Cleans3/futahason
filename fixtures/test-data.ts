@@ -41,6 +41,9 @@ export const PHONES = {
   tooShort: '0901', // (VI) Số quá ngắn — dùng để test validation
   nonNumeric: 'abcxyz', // (VI) Không phải chữ số — test ô nhập không chặn ký tự
   withLetters: '09012ab567', // (VI) Lẫn chữ cái trong số
+  /** Right length (10 digits) but missing the mandatory leading 0. */
+  // (VI) Đủ độ dài (10 chữ số) nhưng KHÔNG bắt đầu bằng 0 — số VN bắt buộc bắt đầu bằng 0.
+  noLeadingZero: '9012345678',
 } as const;
 
 /** Display label shown in the dropdown ("+84"). */
@@ -78,6 +81,16 @@ export const MESSAGES = {
     modalTitle: 'Đăng nhập',
     // (VI) Dòng gợi ý ở bước nhập OTP — cũng dùng để nhận diện đúng modal đăng nhập.
     otpHint: 'Nhập mã xác thực được gửi tới Số điện thoại hoặc Zalo',
+    /**
+     * Inline hint shown when the phone number is the right length but does not
+     * start with 0 (the field is bilingual: "…bắt đầu bằng 0/A phone number
+     * start with 0"). Match on the Vietnamese substring.
+     */
+    // (VI) Gợi ý hiện ngay trong modal khi SĐT đủ dài nhưng không bắt đầu bằng 0.
+    mustStartWithZero: 'Nhập số điện thoại bắt đầu bằng 0',
+    /** Alert popup shown for a phone that starts with 0 but is otherwise invalid (e.g. too short). */
+    // (VI) Popup cảnh báo khi SĐT bắt đầu bằng 0 nhưng sai định dạng (vd: quá ngắn).
+    invalidPhone: 'Số điện thoại không hợp lệ',
   },
 } as const;
 

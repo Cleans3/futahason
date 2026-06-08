@@ -17,7 +17,7 @@ three journeys:
 ```bash
 npm install
 npx playwright install chromium
-npm test            # 17 passed, 3 skipped (the skips need an OTP phone/session)
+npm test            # 18 passed, 3 skipped (the skips need an OTP phone/session)
 ```
 
 | Command | What it does |
